@@ -1,6 +1,6 @@
-let filas = 20
-let columnas = 20
-let lado = 30
+let filas = 10
+let columnas = 10
+let lado = 50
 
 let marcas = 0
 
@@ -15,37 +15,35 @@ nuevoJuego()
 
 function nuevoJuego() {
   reiniciarVariables()
-  generarTableroHTML() //Gernera la estructura visual de la matriz
-  generarTableroJuego() //Se encarla de generar las minas y los números para que sean descubiertos
-  añadirEventos() //se añaden los eventos de mouse para las celdas
-  refrescarTablero() //Se encarga del comportamiento lógico para mostrar los elementos
+  generarTableroHTML() 
+  generarTableroJuego() 
+  añadirEventos() 
+  refrescarTablero()
 }
 
 async function ajustes() {
   const {
     value: ajustes
   } = await swal.fire({
-    title: "Ajustes",
+    title: "Configuración de dificultad",
     html: `
-            Dificultad &nbsp; (minas/área)
+            (minas/área)
             <br>
             <br>
-            <input onchange="cambiarValor()" oninput="this.onchange()" id="dificultad" type="range" min="10" max="40" step="1" value="${100 * minas / (filas * columnas)}" onchange="">
+            <input onchange="cambiarValor()" oninput="this.onchange()" id="dificultad" type="range" min="5" max="50" step="5" value="${100 * minas / (filas * columnas)}" onchange="">
             <span id="valor-dificultad">${100 * minas / (filas * columnas)}%</span>
             <br>
             <br>
             Filas
             <br>
-            <input class="swal2-input" type="number" value=${filas} placeholder="filas" id="filas" min="10" max="1000" step="1">
+            <input class="swal2-input" type="number" value=${filas} placeholder="filas" id="filas" min="10" max="100" step="1">
             <br>
             Columnas
             <br>
-            <input class="swal2-input" type="number" value=${columnas} placeholder="columnas" id="columnas" min="10" max="1000" step="1">
+            <input class="swal2-input" type="number" value=${columnas} placeholder="columnas" id="columnas" min="10" max="100" step="1">
             <br>
             `,
-    confirmButtonText: "Establecer",
-    cancelButtonText: "Cancelar",
-    showCancelButton: true,
+    confirmButtonText: "Iniciar juego",
     preConfirm: () => {
       return {
         columnas: document.getElementById("columnas").value,
@@ -74,15 +72,6 @@ function generarTableroHTML() {
   for (let f = 0; f < filas; f++) {
     html += `<tr>`
     for (let c = 0; c < columnas; c++) {
-      /*
-          Generación de cada uno de los elementos de la matriz
-          y se les asignará una coordenada, para poder tratar estos elementos
-          de forma matemática, siguiendo patrones que fácilitarán la 
-          estructura de algoritmos
-
-          id="celda-${c}-${f}"
-          es la instrucción más importante, asigna una coordenada a cada elemento
-      */
       html += `<td id="celda-${c}-${f}" style="width:${lado}px;height:${lado}px">`
       html += `</td>`
     }
@@ -95,10 +84,6 @@ function generarTableroHTML() {
   tableroHTML.style.background = "rgb(5, 242, 163)"
 }
 
-/*
-    Una vez generado el tablero HTML se le añaden los eventos de clic
-    a cada una de las celdas para que el usuario pueda interactuar con el juego
-*/
 function añadirEventos() {
   for (let f = 0; f < filas; f++) {
     for (let c = 0; c < columnas; c++) {
@@ -113,10 +98,6 @@ function añadirEventos() {
   }
 }
 
-/*
-    Está función se encargará de destapar las celdas que rodean a la celda
-    a la que se le dio doble clic
-*/
 function dobleClic(celda, c, f, me) {
   if (!enJuego) {
     return
@@ -125,44 +106,31 @@ function dobleClic(celda, c, f, me) {
   refrescarTablero()
 }
 
-/*
-    Esta función se encargará de los comportamientos de clic derecho y clic izquierdo
-    para descubrir las celdas, o marcarlas para protegerlas de ser descubiertas
-*/
 function clicSimple(celda, c, f, me) {
   if (!enJuego) {
-    return //El juego ha finalizado
+    return 
   }
   if (tablero[c][f].estado == "descubierto") {
-    return //Las celdas descubiertas no pueden ser redescubiertas o marcadas
+    return 
   }
   switch (me.button) {
-    case 0: //0 es el código para el clic izquierdo
-      if (tablero[c][f].estado == "marcado") { //la celda está protegida
+    case 0: 
+      if (tablero[c][f].estado == "marcado") { 
         break
       }
-      /*
-          Hay que proteger que la primera jugada no sea justo en una mina
-          para no desmotivar al jugador con un castigo a la primera jugada
-
-          Estimo que no le tomará más de 2 iteraciones en arreglar el problema
-      */
+      
       while (!juegoIniciado && tablero[c][f].valor == -1) {
         generarTableroJuego()
       }
       tablero[c][f].estado = "descubierto"
-      juegoIniciado = true //aquí se avisa que el jugador ha descubierto más de 1 celda
+      juegoIniciado = true 
       if (tablero[c][f].valor == 0) {
-        /*
-                                Si acertamos en una celda que no tenga minas alrededor, entonces hay que 
-                                destapar toda el área de ceros
-                            */
         abrirArea(c, f)
       }
       break;
-    case 1: //1 es el código para el clic medio o scroll
+    case 1: 
       break;
-    case 2: //2 es el código para el clic derecho
+    case 2: 
       if (tablero[c][f].estado == "marcado") {
         tablero[c][f].estado = undefined
         marcas--
@@ -178,18 +146,16 @@ function clicSimple(celda, c, f, me) {
 }
 
 function abrirArea(c, f) {
-  //Hay que abrir los demás números que están al rededor
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
       if (i == 0 && j == 0) {
-        //Está condición es obligadoria para que no se encierre en un bucle infinito
         continue
       }
-      try { //Hay que cuidarse de las posiciones negativas
+      try { 
         if (tablero[c + i][f + j].estado != "descubierto") {
           if (tablero[c + i][f + j].estado != "marcado") {
-            tablero[c + i][f + j].estado = "descubierto" //aquí es donde se abren las celdas circundantes
-            if (tablero[c + i][f + j].valor == 0) { //si la celda que se abre es otro 0, se le pasa la responsabilidad
+            tablero[c + i][f + j].estado = "descubierto" 
+            if (tablero[c + i][f + j].valor == 0) { 
               abrirArea(c + i, f + j)
             }
           }
@@ -199,10 +165,6 @@ function abrirArea(c, f) {
   }
 }
 
-/*
-    Aquí nos encargaremos del comportamiento visual según el estado 
-    lógico del tablero de juego
-*/
 function refrescarTablero() {
   for (let f = 0; f < filas; f++) {
     for (let c = 0; c < columnas; c++) {
@@ -239,28 +201,22 @@ function refrescarTablero() {
 
 function actualizarPanelMinas() {
   let panel = document.getElementById("minas")
-  panel.innerHTML = minas - marcas
+  panel.innerHTML = minas - marcas + " minas"
 }
 
 function verificarGanador() {
-  /*
-  Hay que verificar que todas las minas estén tapadas y que las demás
-  estén descubiertas
-  */
+  
   for (let f = 0; f < filas; f++) {
     for (let c = 0; c < columnas; c++) {
-      if (tablero[c][f].estado != `descubierto`) { //Si la mina está cubeirta
-        if (tablero[c][f].valor == -1) { //y es una mina
-          //entonces vamos bien
+      if (tablero[c][f].estado != `descubierto`) { 
+        if (tablero[c][f].valor == -1) { 
           continue
         } else {
-          //Si encuentra una celda cubierta, que no sea una mina, aún no se ha ganado
           return
         }
       }
     }
   }
-  //Si al finalizar la comprobación, todas las celdas cubiertas son minas, entonces se ha ganado
   let tableroHTML = document.getElementById("tablero")
   enJuego = false
 }
@@ -268,7 +224,6 @@ function verificarGanador() {
 function verificarPerdedor() {
   for (let f = 0; f < filas; f++) {
     for (let c = 0; c < columnas; c++) {
-      //Si hay una mina descubierta, entonces se ha perdido
       if (tablero[c][f].valor == -1) {
         if (tablero[c][f].estado == `descubierto`) {
           let tableroHTML = document.getElementById("tablero")
@@ -280,7 +235,6 @@ function verificarPerdedor() {
   if (enJuego) {
     return
   }
-  //Hay que mostrar las demás minas que están ocultas
   for (let f = 0; f < filas; f++) {
     for (let c = 0; c < columnas; c++) {
       if (tablero[c][f].valor == -1) {
@@ -292,19 +246,12 @@ function verificarPerdedor() {
   }
 }
 
-/*
-    Este servirá para dar un seguimiento lógico de 
-    los elementos que el jugador no puede ver
-*/
 function generarTableroJuego() {
-  vaciarTablero() //para que no hayan interferencias con posibles partidas pasadas
-  ponerMinas() //representadas númericamente con el número -1
-  contadoresMinas() //son los números que dan pistas de las minas
+  vaciarTablero() 
+  ponerMinas() 
+  contadoresMinas() 
 }
 
-/*
-    Se encarga de poner el tablero en un estado inicial para insertar elementos
-*/
 function vaciarTablero() {
   tablero = []
   for (let c = 0; c < columnas; c++) {
@@ -318,13 +265,13 @@ function ponerMinas() {
     let f
 
     do {
-      c = Math.floor(Math.random() * columnas) //Genera una columna aleatoria en el tablero
-      f = Math.floor(Math.random() * filas) //Genera una fila aleatoria en el tablero
-    } while (tablero[c][f]); //Se encarga de verificar que en la celda no haya una mina
+      c = Math.floor(Math.random() * columnas)
+      f = Math.floor(Math.random() * filas) 
+    } while (tablero[c][f]); 
 
     tablero[c][f] = {
       valor: -1
-    } //Se inserta la mina en la celda disponible
+    } 
   }
 }
 
@@ -333,13 +280,12 @@ function contadoresMinas() {
     for (let c = 0; c < columnas; c++) {
       if (!tablero[c][f]) {
         let contador = 0
-        //Se van a recorrer todas las celdas que están al rededor de la misma, 8 en total
         for (let i = -1; i <= 1; i++) {
           for (let j = -1; j <= 1; j++) {
             if (i == 0 && j == 0) {
               continue
             }
-            try { //hay que evitar errores con las posiciones negativas
+            try {
               if (tablero[c + i][f + j].valor == -1) {
                 contador++
               }
